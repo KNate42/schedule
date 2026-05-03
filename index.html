@@ -14,12 +14,7 @@
 </head>
 <body>
 
-<div id="loader" class="loader">
-  <div class="loader-ring"></div>
-  <p class="loader-text">Загрузка…</p>
-</div>
-
-<div id="app-body" class="app" hidden>
+<div id="app-body" class="app">
 
   <!-- TOP BAR -->
   <header class="topbar">
@@ -32,9 +27,6 @@
     </div>
     <div id="theme-picker" class="theme-picker"></div>
   </header>
-
-  <!-- SECTION SWITCHER -->
-  <div id="section-switcher" class="section-switcher" role="tablist"></div>
 
   <!-- ADD FORM -->
   <section class="form-card">
@@ -53,8 +45,8 @@
           <input id="time" type="time" required value="08:00">
         </div>
         <div class="field field-subject">
-          <label class="field-label" for="activity">Предмет</label>
-          <input id="activity" type="text" placeholder="Распевка, Дыхание…" required maxlength="60">
+          <label class="field-label" for="activity">ФИО</label>
+          <input id="activity" type="text" placeholder="Анастасия Александровна…" required maxlength="60">
         </div>
       </div>
       <button type="submit" class="btn-primary">
@@ -115,8 +107,8 @@
           <input id="modal-time" type="time" required>
         </div>
         <div class="field field-subject">
-          <label class="field-label" for="modal-activity">Предмет</label>
-          <input id="modal-activity" type="text" required maxlength="60">
+          <label class="field-label" for="modal-activity">Имя</label>
+          <input id="modal-activity" type="text" placeholder="Анастасия Александровна…" required maxlength="60">
         </div>
       </div>
       <div class="modal-actions">

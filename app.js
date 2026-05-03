@@ -75,21 +75,18 @@
   const presetNameInput  = $('preset-name-input');
   const presetSaveBtn    = $('preset-save-btn');
 
-  // section refs
+  // section / datalist host
   const sectionSwitcher = $('section-switcher');
   const datalistsHost   = $('datalists-host');
 
   /* ── init UI ── */
   buildThemePicker();
-  buildSectionSwitcher();
+  if (sectionSwitcher && SECTIONS.length > 1) buildSectionSwitcher();
   buildDatalists();
   refreshDatalistAttr();
   buildDayChips(dayChips, () => selectedDay, v => { selectedDay = v; });
   buildDayChips(modalDayChips, () => modalState.day, v => { modalState.day = v; refreshChips(modalDayChips, modalState.day); });
   applyTheme(loadTheme());
-
-  appBody.hidden = false;
-  $('loader').hidden = true;
 
   /* ── title (per section) ── */
   refreshTitle();
@@ -190,6 +187,7 @@
     });
   }
   function refreshSectionTabs() {
+    if (!sectionSwitcher) return;
     for (const btn of sectionSwitcher.querySelectorAll('.section-tab')) {
       btn.setAttribute('aria-selected', btn.dataset.section === currentSection ? 'true' : 'false');
     }
@@ -220,12 +218,14 @@
     }).join('');
   }
   function refreshDatalistAttr() {
-    activityInput.setAttribute('list', `subjects-${currentSection}`);
-    modalActivity.setAttribute('list', `subjects-${currentSection}`);
     const subs = getSection(currentSection)?.subjects || [];
-    const ph = subs.length >= 2 ? `${subs[0]}, ${subs[1]}…` : (subs[0] || '');
-    activityInput.placeholder = ph;
-    modalActivity.placeholder = ph;
+    if (subs.length > 0) {
+      activityInput.setAttribute('list', `subjects-${currentSection}`);
+      modalActivity.setAttribute('list', `subjects-${currentSection}`);
+    } else {
+      activityInput.removeAttribute('list');
+      modalActivity.removeAttribute('list');
+    }
   }
 
   /* ── title ── */
@@ -737,17 +737,16 @@
 
   /* ── fatal error ── */
   function showFatalError(err) {
-    const loader = document.getElementById('loader');
-    if (!loader) return;
     const isFile = location.protocol === 'file:';
-    loader.className = 'fatal-error';
-    loader.innerHTML = isFile
+    const msg = isFile
       ? `<p><b>Не удалось загрузить config.json</b></p>
          <p>Страница открыта как локальный файл (<code>file://</code>).</p>
          <p>Запусти сервер в папке проекта:<br><code>python3 -m http.server 8000</code></p>
          <p>и открой <code>http://localhost:8000</code></p>`
       : `<p><b>Ошибка загрузки конфигурации</b></p>
          <p><code>${String(err?.message || err).replace(/[<>&]/g, '')}</code></p>`;
+    const host = document.getElementById('app-body') || document.body;
+    host.innerHTML = `<div class="fatal-error">${msg}</div>`;
   }
 
   /* ── first render ── */
