@@ -12,43 +12,58 @@
     return;
   }
 
-  const STORAGE_KEY  = config.storageKeys.schedule;
-  const TITLE_KEY    = config.storageKeys.title;
-  const THEME_KEY    = config.storageKeys.theme;
-  const DAYS         = config.days;
+  const STORAGE_KEY   = config.storageKeys.schedule;
+  const TITLE_KEY     = config.storageKeys.title;
+  const THEME_KEY     = config.storageKeys.theme;
+  const DAYS          = config.days;
   const DEFAULT_TITLE = config.defaultScheduleTitle;
   const DEFAULT_THEME = config.defaultTheme;
-  const THEMES       = config.themes;
-  const CATEGORIES   = config.categories;
-  const MONTHS       = config.monthsGenitive;
+  const THEMES        = config.themes;
+  const CATEGORIES    = config.categories;
+  const MONTHS        = config.monthsGenitive;
 
   /* ── state ── */
   let schedule    = loadSchedule();
   let selectedDay = todayIso();
-  let lastAddedId = null;
+  let lastTouchedId = null;
+  const modalState = { editingId: null, day: todayIso() };
 
   /* ── DOM refs ── */
-  const themePicker   = document.getElementById('theme-picker');
-  const dayChips      = document.getElementById('day-chips');
-  const form          = document.getElementById('add-form');
-  const timeInput     = document.getElementById('time');
-  const activityInput = document.getElementById('activity');
-  const daysContainer = document.getElementById('days-container');
-  const downloadBtn   = document.getElementById('download-btn');
-  const clearBtn      = document.getElementById('clear-btn');
-  const titleEl       = document.getElementById('schedule-title');
-  const weekRangeEl   = document.getElementById('schedule-week-range');
-  const footerEl      = document.getElementById('schedule-footer');
-  const toastEl       = document.getElementById('toast');
-  const appBody       = document.getElementById('app-body');
+  const $ = id => document.getElementById(id);
+
+  const themePicker   = $('theme-picker');
+  const dayChips      = $('day-chips');
+  const form          = $('add-form');
+  const timeInput     = $('time');
+  const activityInput = $('activity');
+  const daysContainer = $('days-container');
+  const downloadBtn   = $('download-btn');
+  const clearBtn      = $('clear-btn');
+  const titleEl       = $('schedule-title');
+  const weekRangeEl   = $('schedule-week-range');
+  const footerEl      = $('schedule-footer');
+  const toastEl       = $('toast');
+  const appBody       = $('app-body');
+
+  // Modal refs
+  const modalOverlay  = $('modal-overlay');
+  const modalForm     = $('modal-form');
+  const modalTitle    = $('modal-title');
+  const modalDayChips = $('modal-day-chips');
+  const modalTime     = $('modal-time');
+  const modalActivity = $('modal-activity');
+  const modalDeleteBtn= $('modal-delete-btn');
+  const modalCancelBtn= $('modal-cancel-btn');
+  const modalCloseBtn = $('modal-close-btn');
 
   /* ── init UI ── */
   buildThemePicker();
-  buildDayChips();
+  buildDayChips(dayChips, () => selectedDay, v => { selectedDay = v; });
+  buildDayChips(modalDayChips, () => modalState.day, v => { modalState.day = v; refreshChips(modalDayChips, modalState.day); });
   applyTheme(loadTheme());
 
   appBody.hidden = false;
-  document.getElementById('loader').hidden = true;
+  $('loader').hidden = true;
 
   /* ── title ── */
   const savedTitle = localStorage.getItem(TITLE_KEY);
@@ -80,11 +95,7 @@
     return String(s).replace(/[&<>"']/g, c =>
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
   }
-
-  function todayIso() {
-    const d = new Date().getDay();
-    return d === 0 ? 7 : d;
-  }
+  function todayIso() { const d = new Date().getDay(); return d === 0 ? 7 : d; }
 
   function loadTheme() {
     const s = localStorage.getItem(THEME_KEY);
@@ -99,7 +110,6 @@
     }
   }
 
-  /* ── theme picker ── */
   function buildThemePicker() {
     themePicker.innerHTML = THEMES
       .map(t => `<button class="theme-chip" type="button" data-theme="${t.id}" aria-pressed="false">${t.icon} ${esc(t.name)}</button>`)
@@ -110,23 +120,24 @@
     });
   }
 
-  /* ── day chips ── */
-  function buildDayChips() {
+  /* ── Day chips builder (reusable) ── */
+  function buildDayChips(container, get, set) {
     const today = todayIso();
-    dayChips.innerHTML = DAYS
+    container.innerHTML = DAYS
       .map(d => `<button class="day-chip day-${d.id}${d.id === today ? ' is-today' : ''}" type="button" data-day="${d.id}" aria-pressed="false" title="${d.long}">${d.short}</button>`)
       .join('');
-    selectDayChip(selectedDay);
-    dayChips.addEventListener('click', e => {
+    refreshChips(container, get());
+    container.addEventListener('click', e => {
       const btn = e.target.closest('.day-chip');
       if (!btn) return;
-      selectedDay = parseInt(btn.dataset.day, 10);
-      selectDayChip(selectedDay);
+      const dayId = parseInt(btn.dataset.day, 10);
+      set(dayId);
+      refreshChips(container, dayId);
     });
   }
-  function selectDayChip(id) {
-    for (const btn of dayChips.querySelectorAll('.day-chip')) {
-      btn.setAttribute('aria-pressed', parseInt(btn.dataset.day, 10) === id ? 'true' : 'false');
+  function refreshChips(container, current) {
+    for (const btn of container.querySelectorAll('.day-chip')) {
+      btn.setAttribute('aria-pressed', parseInt(btn.dataset.day, 10) === current ? 'true' : 'false');
     }
   }
 
@@ -142,9 +153,8 @@
     return { monday: mon, sunday: sun };
   }
   function formatWeekRange({ monday, sunday }) {
-    if (monday.getMonth() === sunday.getMonth()) {
+    if (monday.getMonth() === sunday.getMonth())
       return `${monday.getDate()}–${sunday.getDate()} ${MONTHS[monday.getMonth()]}`;
-    }
     return `${monday.getDate()} ${MONTHS[monday.getMonth()]} – ${sunday.getDate()} ${MONTHS[sunday.getMonth()]}`;
   }
   function dateForDay(monday, dayId) {
@@ -158,16 +168,14 @@
   function detectEmoji(text) {
     const t = String(text || '').toLowerCase();
     if (!t) return '';
-    for (const cat of CATEGORIES) {
-      for (const kw of cat.keywords) {
+    for (const cat of CATEGORIES)
+      for (const kw of cat.keywords)
         if (t.includes(kw)) return cat.emoji;
-      }
-    }
     return '';
   }
 
   /* ══════════════════════════════════════
-     RENDER — weekly timetable table
+     RENDER — weekly timetable
   ══════════════════════════════════════ */
   function render() {
     const { monday, sunday } = getWeekRange();
@@ -175,14 +183,7 @@
 
     weekRangeEl.textContent = formatWeekRange({ monday, sunday });
 
-    /* group & sort */
-    const byDay = {};
-    for (const d of DAYS) byDay[d.id] = [];
-    for (const item of schedule) {
-      if (byDay[item.day]) byDay[item.day].push(item);
-    }
-
-    /* collect unique time slots */
+    // Collect unique time slots across all schedule items
     const timesSet = new Set(schedule.map(i => i.time));
     const times = [...timesSet].sort();
 
@@ -190,13 +191,13 @@
       daysContainer.innerHTML = `
         <div class="empty-state">
           <strong>📋 Расписание пустое</strong>
-          Выбери день, укажи время и предмет —<br>нажми «Добавить урок»
+          Добавь первый урок через форму выше<br>или начни заполнять таблицу
         </div>`;
       updateFooter();
       return;
     }
 
-    /* build grid: time → dayId → items[] */
+    // grid: time → dayId → items[]
     const grid = {};
     for (const t of times) {
       grid[t] = {};
@@ -207,15 +208,14 @@
         grid[item.time][item.day].push(item);
     }
 
-    /* ── table HTML ── */
     let html = '<table class="schedule-table" role="grid">';
 
-    /* colgroup */
+    // colgroup
     html += '<colgroup><col class="col-time">';
-    for (const d of DAYS) html += `<col class="col-day day-${d.id}">`;
+    for (const d of DAYS) html += `<col class="col-day">`;
     html += '</colgroup>';
 
-    /* thead */
+    // thead
     html += '<thead><tr>';
     html += '<th class="th-time" scope="col">Время</th>';
     for (const d of DAYS) {
@@ -228,7 +228,7 @@
     }
     html += '</tr></thead>';
 
-    /* tbody */
+    // tbody
     html += '<tbody>';
     for (const time of times) {
       html += '<tr>';
@@ -236,16 +236,15 @@
       for (const d of DAYS) {
         const items = grid[time][d.id];
         if (items.length === 0) {
-          html += `<td class="td-lesson empty day-${d.id}"></td>`;
+          html += `<td class="td-lesson empty day-${d.id}" data-day="${d.id}" data-time="${esc(time)}" title="Добавить урок"></td>`;
         } else {
-          html += `<td class="td-lesson has-lesson day-${d.id}">`;
+          html += `<td class="td-lesson has-lesson day-${d.id}" data-day="${d.id}" data-time="${esc(time)}">`;
           for (const item of items) {
             const emoji = detectEmoji(item.activity);
-            const isNew = item.id === lastAddedId;
-            html += `<div class="lesson-cell day-${d.id}${isNew ? ' just-added' : ''}">`;
+            const isNew = item.id === lastTouchedId;
+            html += `<div class="lesson-cell day-${d.id}${isNew ? ' just-added' : ''}" data-id="${esc(item.id)}" tabindex="0" role="button" aria-label="Редактировать ${esc(item.activity)}">`;
             if (emoji) html += `<span class="lesson-emoji">${emoji}</span>`;
             html += `<span class="lesson-name">${esc(item.activity)}</span>`;
-            html += `<button class="delete-btn" data-id="${esc(item.id)}" aria-label="Удалить" type="button">×</button>`;
             html += '</div>';
           }
           html += '</td>';
@@ -256,7 +255,7 @@
     html += '</tbody></table>';
 
     daysContainer.innerHTML = html;
-    lastAddedId = null;
+    lastTouchedId = null;
     updateFooter();
   }
 
@@ -266,7 +265,7 @@
   }
 
   /* ══════════════════════════════════════
-     FORM
+     QUICK ADD FORM
   ══════════════════════════════════════ */
   form.addEventListener('submit', e => {
     e.preventDefault();
@@ -274,7 +273,7 @@
     if (!activity) return;
     const item = { id: uid(), day: selectedDay, time: timeInput.value, activity };
     schedule.push(item);
-    lastAddedId = item.id;
+    lastTouchedId = item.id;
     save();
     render();
     activityInput.value = '';
@@ -282,21 +281,115 @@
     showToast('Урок добавлен');
   });
 
+  /* ══════════════════════════════════════
+     TABLE CLICKS — open modal
+  ══════════════════════════════════════ */
   daysContainer.addEventListener('click', e => {
-    const btn = e.target.closest('.delete-btn');
-    if (!btn) return;
-    schedule = schedule.filter(s => s.id !== btn.dataset.id);
-    save();
-    render();
-    showToast('Урок удалён');
+    const lesson = e.target.closest('.lesson-cell[data-id]');
+    if (lesson) {
+      openEditModal(lesson.dataset.id);
+      return;
+    }
+    const cell = e.target.closest('.td-lesson[data-day][data-time]');
+    if (cell && cell.classList.contains('empty')) {
+      openAddModal(parseInt(cell.dataset.day, 10), cell.dataset.time);
+    }
+  });
+  daysContainer.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const lesson = e.target.closest('.lesson-cell[data-id]');
+      if (lesson) { e.preventDefault(); openEditModal(lesson.dataset.id); }
+    }
   });
 
+  /* ══════════════════════════════════════
+     MODAL (add / edit)
+  ══════════════════════════════════════ */
+  function openAddModal(day = todayIso(), time = '08:00') {
+    modalState.editingId = null;
+    modalState.day = day;
+    refreshChips(modalDayChips, day);
+    modalTime.value = time;
+    modalActivity.value = '';
+    modalTitle.textContent = 'Новый урок';
+    modalDeleteBtn.hidden = true;
+    showModal();
+  }
+
+  function openEditModal(id) {
+    const item = schedule.find(s => s.id === id);
+    if (!item) return;
+    modalState.editingId = item.id;
+    modalState.day = item.day;
+    refreshChips(modalDayChips, item.day);
+    modalTime.value = item.time;
+    modalActivity.value = item.activity;
+    modalTitle.textContent = 'Редактирование';
+    modalDeleteBtn.hidden = false;
+    showModal();
+  }
+
+  let prevFocus = null;
+  function showModal() {
+    prevFocus = document.activeElement;
+    modalOverlay.hidden = false;
+    modalOverlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => modalActivity.focus(), 30);
+  }
+  function closeModal() {
+    modalOverlay.hidden = true;
+    modalOverlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    modalState.editingId = null;
+    if (prevFocus && prevFocus.focus) prevFocus.focus();
+  }
+
+  modalForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const activity = modalActivity.value.trim();
+    if (!activity) return;
+    const time = modalTime.value;
+    const day  = modalState.day;
+    if (modalState.editingId) {
+      const item = schedule.find(s => s.id === modalState.editingId);
+      if (item) { item.day = day; item.time = time; item.activity = activity; lastTouchedId = item.id; }
+      save(); render(); closeModal();
+      showToast('Урок обновлён');
+    } else {
+      const item = { id: uid(), day, time, activity };
+      schedule.push(item);
+      lastTouchedId = item.id;
+      save(); render(); closeModal();
+      showToast('Урок добавлен');
+    }
+  });
+
+  modalDeleteBtn.addEventListener('click', () => {
+    if (!modalState.editingId) return;
+    if (!confirm('Удалить этот урок?')) return;
+    schedule = schedule.filter(s => s.id !== modalState.editingId);
+    save(); render(); closeModal();
+    showToast('Удалено');
+  });
+
+  modalCancelBtn.addEventListener('click', closeModal);
+  modalCloseBtn.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', e => {
+    if (e.target === modalOverlay) closeModal();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !modalOverlay.hidden) closeModal();
+  });
+
+  /* ══════════════════════════════════════
+     CLEAR
+  ══════════════════════════════════════ */
   clearBtn.addEventListener('click', () => {
     if (schedule.length === 0) { showToast('Расписание уже пустое'); return; }
     if (!confirm('Удалить всё расписание?')) return;
     schedule = [];
-    save();
-    render();
+    save(); render();
     showToast('Очищено');
   });
 
@@ -308,20 +401,20 @@
       showToast('Библиотека ещё грузится, попробуй ещё раз');
       return;
     }
-    const card = document.getElementById('schedule-card');
+    const card = $('schedule-card');
     downloadBtn.disabled = true;
     const originalHTML = downloadBtn.innerHTML;
-    downloadBtn.textContent = 'Готовлю…';
+    downloadBtn.innerHTML = '<span>Готовлю…</span>';
     try {
       if (document.fonts?.ready) await document.fonts.ready;
-      document.activeElement?.blur();
-      window.getSelection?.()?.removeAllRanges();
+      document.activeElement?.blur?.();
+      window.getSelection?.()?.removeAllRanges?.();
 
       card.classList.add('exporting');
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
       const dpr   = Math.max(2, window.devicePixelRatio || 1);
-      const scale = dpr * 1.8;
+      const scale = dpr * 1.6;
 
       const canvas = await html2canvas(card, {
         scale,
@@ -370,7 +463,7 @@
     toastEl.textContent = msg;
     toastEl.classList.add('visible');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('visible'), 2200);
+    toastTimer = setTimeout(() => toastEl.classList.remove('visible'), 2000);
   }
 
   /* ── fatal error ── */

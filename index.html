@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#6366f1">
   <title>Планнер уроков</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,10 +24,10 @@
   <!-- TOP BAR -->
   <header class="topbar">
     <div class="topbar-brand">
-      <div class="brand-icon">📚</div>
+      <div class="brand-icon" aria-hidden="true">📚</div>
       <div>
         <div class="brand-name">Планнер уроков</div>
-        <div class="brand-sub">Составь расписание на неделю</div>
+        <div class="brand-sub">Расписание на неделю</div>
       </div>
     </div>
     <div id="theme-picker" class="theme-picker"></div>
@@ -36,12 +36,12 @@
   <!-- ADD FORM -->
   <section class="form-card">
     <div class="form-card-title">
-      <span class="form-card-icon">✏️</span>
-      Добавить урок
+      <span class="form-card-icon" aria-hidden="true">➕</span>
+      <span>Новый урок</span>
     </div>
     <form id="add-form" autocomplete="off">
       <div class="field">
-        <div class="field-label">День недели</div>
+        <div class="field-label">День</div>
         <div id="day-chips" class="day-chips"></div>
       </div>
       <div class="form-row">
@@ -50,42 +50,22 @@
           <input id="time" type="time" required value="08:00">
         </div>
         <div class="field field-subject">
-          <label class="field-label" for="activity">Предмет / занятие</label>
+          <label class="field-label" for="activity">Предмет</label>
           <input id="activity" type="text" placeholder="Математика, Химия…" required maxlength="60" list="subjects-list">
-          <datalist id="subjects-list">
-            <option value="Математика">
-            <option value="Алгебра">
-            <option value="Геометрия">
-            <option value="Русский язык">
-            <option value="Литература">
-            <option value="Английский язык">
-            <option value="Немецкий язык">
-            <option value="История">
-            <option value="География">
-            <option value="Биология">
-            <option value="Химия">
-            <option value="Физика">
-            <option value="Информатика">
-            <option value="ИЗО">
-            <option value="Музыка">
-            <option value="Физкультура">
-            <option value="Технология">
-            <option value="ОБЖ">
-          </datalist>
         </div>
       </div>
-      <button type="submit" class="btn-add">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Добавить урок
+      <button type="submit" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>Добавить</span>
       </button>
     </form>
   </section>
 
   <!-- ACTION BAR -->
   <div class="action-bar">
-    <button type="button" id="download-btn" class="btn-download">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Скачать PNG
+    <button type="button" id="download-btn" class="btn-secondary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Скачать PNG</span>
     </button>
     <button type="button" id="clear-btn" class="btn-ghost">Очистить</button>
   </div>
@@ -96,7 +76,7 @@
       <h2 class="schedule-title" id="schedule-title" contenteditable="true" spellcheck="false"></h2>
       <div class="schedule-meta-row">
         <span class="week-range" id="schedule-week-range"></span>
-        <span class="title-hint" id="title-hint">← нажми для редактирования</span>
+        <span class="title-hint" id="title-hint">нажми, чтобы переименовать</span>
       </div>
     </div>
     <div class="table-wrap">
@@ -105,7 +85,69 @@
     <footer class="schedule-footer" id="schedule-footer"></footer>
   </div>
 
+  <p class="hint-bar">Нажми на ячейку таблицы — урок откроется для редактирования или добавления</p>
 </div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" hidden aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-head">
+      <h3 class="modal-title" id="modal-title">Урок</h3>
+      <button class="modal-close" id="modal-close-btn" type="button" aria-label="Закрыть">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="modal-form" autocomplete="off">
+      <div class="field">
+        <div class="field-label">День</div>
+        <div id="modal-day-chips" class="day-chips"></div>
+      </div>
+      <div class="form-row">
+        <div class="field field-time">
+          <label class="field-label" for="modal-time">Время</label>
+          <input id="modal-time" type="time" required>
+        </div>
+        <div class="field field-subject">
+          <label class="field-label" for="modal-activity">Предмет</label>
+          <input id="modal-activity" type="text" required maxlength="60" list="subjects-list">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="modal-delete-btn" class="btn-danger" hidden>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          <span>Удалить</span>
+        </button>
+        <div class="modal-actions-right">
+          <button type="button" id="modal-cancel-btn" class="btn-ghost btn-sm">Отмена</button>
+          <button type="submit" class="btn-primary btn-sm">Сохранить</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<datalist id="subjects-list">
+  <option value="Математика"></option>
+  <option value="Алгебра"></option>
+  <option value="Геометрия"></option>
+  <option value="Русский язык"></option>
+  <option value="Литература"></option>
+  <option value="Английский язык"></option>
+  <option value="Немецкий язык"></option>
+  <option value="Французский язык"></option>
+  <option value="История"></option>
+  <option value="Обществознание"></option>
+  <option value="География"></option>
+  <option value="Биология"></option>
+  <option value="Химия"></option>
+  <option value="Физика"></option>
+  <option value="Информатика"></option>
+  <option value="ИЗО"></option>
+  <option value="Музыка"></option>
+  <option value="Физкультура"></option>
+  <option value="Технология"></option>
+  <option value="ОБЖ"></option>
+</datalist>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
