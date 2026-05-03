@@ -1,62 +1,113 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#fef6f0">
-<title>Расписание на неделю</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
-<script src="app.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#6366f1">
+  <title>Планнер уроков</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Comfortaa:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
 
-<div class="app">
-  <h1 class="app-title">Конструктор расписания</h1>
-  <p class="app-subtitle">Составь неделю и скачай красивую картинку</p>
-
-  <div id="loader" class="loading">Загрузка…</div>
-
-  <div id="app-body" hidden>
-    <!-- Add form -->
-    <form class="form-card" id="add-form" autocomplete="off">
-      <div class="row">
-        <div class="field">
-          <label for="day">День</label>
-          <select id="day" required></select>
-        </div>
-        <div class="field" style="flex: 0 0 120px;">
-          <label for="time">Время</label>
-          <input id="time" type="time" required value="09:00">
-        </div>
-      </div>
-      <div class="field">
-        <label for="activity">Что делать</label>
-        <input id="activity" type="text" placeholder="Например: йога с Машей" required maxlength="80">
-      </div>
-      <button type="submit" class="btn-primary">+ Добавить</button>
-    </form>
-
-    <!-- Action buttons -->
-    <div class="actions" style="margin-top: 16px;">
-      <button type="button" id="download-btn" class="btn-secondary">📥 Скачать PNG</button>
-      <button type="button" id="clear-btn" class="btn-ghost">Очистить</button>
-    </div>
-
-    <!-- Schedule preview / export target -->
-    <div class="schedule-card" id="schedule-card" style="margin-top: 16px;">
-      <h2 class="schedule-title" id="schedule-title" contenteditable="true" spellcheck="false"></h2>
-      <p class="schedule-title-hint">↑ нажми, чтобы изменить заголовок</p>
-      <div id="days-container"></div>
-      <div class="schedule-footer" id="schedule-footer"></div>
-    </div>
-  </div>
+<div id="loader" class="loader">
+  <div class="loader-ring"></div>
+  <p class="loader-text">Загрузка…</p>
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="app-body" class="app" hidden>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="brand-icon">📚</div>
+      <div>
+        <div class="brand-name">Планнер уроков</div>
+        <div class="brand-sub">Составь расписание на неделю</div>
+      </div>
+    </div>
+    <div id="theme-picker" class="theme-picker"></div>
+  </header>
+
+  <!-- ADD FORM -->
+  <section class="form-card">
+    <div class="form-card-title">
+      <span class="form-card-icon">✏️</span>
+      Добавить урок
+    </div>
+    <form id="add-form" autocomplete="off">
+      <div class="field">
+        <div class="field-label">День недели</div>
+        <div id="day-chips" class="day-chips"></div>
+      </div>
+      <div class="form-row">
+        <div class="field field-time">
+          <label class="field-label" for="time">Время</label>
+          <input id="time" type="time" required value="08:00">
+        </div>
+        <div class="field field-subject">
+          <label class="field-label" for="activity">Предмет / занятие</label>
+          <input id="activity" type="text" placeholder="Математика, Химия…" required maxlength="60" list="subjects-list">
+          <datalist id="subjects-list">
+            <option value="Математика">
+            <option value="Алгебра">
+            <option value="Геометрия">
+            <option value="Русский язык">
+            <option value="Литература">
+            <option value="Английский язык">
+            <option value="Немецкий язык">
+            <option value="История">
+            <option value="География">
+            <option value="Биология">
+            <option value="Химия">
+            <option value="Физика">
+            <option value="Информатика">
+            <option value="ИЗО">
+            <option value="Музыка">
+            <option value="Физкультура">
+            <option value="Технология">
+            <option value="ОБЖ">
+          </datalist>
+        </div>
+      </div>
+      <button type="submit" class="btn-add">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Добавить урок
+      </button>
+    </form>
+  </section>
+
+  <!-- ACTION BAR -->
+  <div class="action-bar">
+    <button type="button" id="download-btn" class="btn-download">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Скачать PNG
+    </button>
+    <button type="button" id="clear-btn" class="btn-ghost">Очистить</button>
+  </div>
+
+  <!-- SCHEDULE CARD (export target) -->
+  <div class="schedule-card" id="schedule-card">
+    <div class="schedule-card-head">
+      <h2 class="schedule-title" id="schedule-title" contenteditable="true" spellcheck="false"></h2>
+      <div class="schedule-meta-row">
+        <span class="week-range" id="schedule-week-range"></span>
+        <span class="title-hint" id="title-hint">← нажми для редактирования</span>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div id="days-container"></div>
+    </div>
+    <footer class="schedule-footer" id="schedule-footer"></footer>
+  </div>
+
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 </body>
 </html>
