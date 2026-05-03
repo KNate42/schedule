@@ -682,8 +682,8 @@
       card.classList.add('exporting');
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-      const dpr   = Math.max(2, window.devicePixelRatio || 1);
-      const scale = dpr * 1.6;
+      // Cap scale: high enough for crisp print, low enough to avoid huge files
+      const scale = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
 
       const canvas = await html2canvas(card, {
         scale,
@@ -698,12 +698,20 @@
 
       card.classList.remove('exporting');
 
+      // Use Blob + ObjectURL — toDataURL can exceed mobile-browser limits silently
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob returned null')), 'image/png');
+      });
+
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.download = makeFilename();
-      link.href = canvas.toDataURL('image/png');
+      link.href = url;
+      link.rel = 'noopener';
       document.body.appendChild(link);
       link.click();
       link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
 
       showToast('Таблица сохранена ✓');
     } catch (err) {
