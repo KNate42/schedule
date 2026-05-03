@@ -351,7 +351,7 @@ input::placeholder { color: var(--ink-muted); opacity: .55; }
   background: var(--d-bg);
   color: var(--d-fg);
   border-color: var(--d-fg);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--d-fg) 12%, transparent);
+  box-shadow: 0 0 0 3px rgba(0,0,0,.06);
 }
 .day-chip.is-today::after {
   content: '';
@@ -562,7 +562,8 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   font-variant-numeric: tabular-nums;
 }
 .th-day.is-today {
-  background: linear-gradient(180deg, var(--d-bg) 0%, color-mix(in srgb, var(--d-bg) 70%, var(--primary-light)) 100%);
+  background: var(--d-bg);
+  border-bottom: 3px solid var(--primary);
 }
 .th-day.is-today .th-day-name::before {
   content: '●';
@@ -623,7 +624,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   color: var(--primary);
   line-height: 1;
 }
-.td-lesson.empty:active { background-color: color-mix(in srgb, var(--primary-light) 70%, var(--primary) 8%); }
+.td-lesson.empty:active { background-color: var(--primary-light); filter: brightness(.95); }
 
 .td-lesson.has-lesson { background: var(--surface-2); }
 
@@ -718,6 +719,8 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .schedule-card.exporting .schedule-table thead th { position: static; }
 .schedule-card.exporting .td-time,
 .schedule-card.exporting .th-time { position: static; }
+/* clean edge for export — outer card shadow gets cropped anyway */
+.schedule-card.exporting { box-shadow: none; }
 
 /* ══════════════════════════════════════════
    MODAL
