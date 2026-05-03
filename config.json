@@ -1,0 +1,16 @@
+{
+  "defaultScheduleTitle": "Расписание на неделю",
+  "days": [
+    { "id": 1, "long": "Понедельник", "short": "Пн" },
+    { "id": 2, "long": "Вторник",     "short": "Вт" },
+    { "id": 3, "long": "Среда",       "short": "Ср" },
+    { "id": 4, "long": "Четверг",     "short": "Чт" },
+    { "id": 5, "long": "Пятница",     "short": "Пт" },
+    { "id": 6, "long": "Суббота",     "short": "Сб" },
+    { "id": 7, "long": "Воскресенье", "short": "Вс" }
+  ],
+  "storageKeys": {
+    "schedule": "mom-schedule-v1",
+    "title": "mom-schedule-title-v1"
+  }
+}

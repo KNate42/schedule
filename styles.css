@@ -1,0 +1,339 @@
+:root {
+  --bg: #fef6f0;
+  --surface: #ffffff;
+  --ink: #2c2c2c;
+  --ink-soft: #6b6b6b;
+  --accent: #d96452;
+  --accent-soft: #fbe5df;
+  --border: #f0e5dc;
+  --shadow: 0 6px 24px rgba(50, 30, 20, 0.06);
+  --radius: 18px;
+  --radius-sm: 12px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100vh;
+  padding: 16px 14px 40px;
+}
+
+.app {
+  max-width: 460px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+h1.app-title {
+  font-family: 'Comfortaa', sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  margin: 8px 0 0;
+  text-align: center;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+}
+
+.app-subtitle {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ---------- Loading / error states ---------- */
+.loading,
+.fatal-error {
+  text-align: center;
+  padding: 24px;
+  color: var(--ink-soft);
+}
+.fatal-error {
+  background: #fff3f0;
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--radius);
+  color: var(--accent);
+}
+.fatal-error code {
+  display: inline-block;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+/* ---------- Form ---------- */
+.form-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-left: 4px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.row > .field { flex: 1; min-width: 0; }
+
+input, select, textarea {
+  font: inherit;
+  font-size: 16px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fdfaf6;
+  color: var(--ink);
+  outline: none;
+  width: 100%;
+  transition: border-color .15s, background .15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  background: #fff;
+}
+
+select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%236b6b6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+button {
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 13px 18px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: transform .1s, background .15s, opacity .15s;
+  min-height: 48px;
+}
+
+button:active { transform: scale(0.97); }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: #c4543f; }
+
+.btn-secondary {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.btn-secondary:hover { background: #f7d6cc; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1.5px solid var(--border);
+}
+.btn-ghost:hover { background: #faf3ec; }
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+.actions > button { flex: 1; }
+
+/* ---------- Schedule card (export target) ---------- */
+.schedule-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  box-shadow: var(--shadow);
+}
+
+.schedule-title {
+  font-family: 'Comfortaa', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  text-align: center;
+  margin: 0 0 4px;
+  outline: none;
+  border-radius: 8px;
+  padding: 4px 8px;
+  transition: background .15s;
+}
+.schedule-title:hover,
+.schedule-title:focus {
+  background: #fdf3ec;
+}
+.schedule-title-hint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin: 0 0 18px;
+  opacity: 0.7;
+}
+
+.day-section { margin-top: 18px; }
+.day-section:first-of-type { margin-top: 0; }
+
+.day-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.day-header .day-name { letter-spacing: 0.3px; }
+.day-header .day-short { font-size: 12px; opacity: 0.7; font-weight: 600; }
+
+/* Per-day pastel palette */
+.day-1 .day-header { background: #ffe5e5; color: #b03a3a; }
+.day-2 .day-header { background: #fff0d6; color: #b8761d; }
+.day-3 .day-header { background: #fdf6cc; color: #927700; }
+.day-4 .day-header { background: #e3f3df; color: #4a7d3a; }
+.day-5 .day-header { background: #dceefb; color: #2c6a9e; }
+.day-6 .day-header { background: #e6e1f7; color: #5a449e; }
+.day-7 .day-header { background: #fbe1ee; color: #a83d77; }
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 8px 8px 10px;
+  border-radius: 10px;
+  transition: background .15s;
+}
+.item:hover { background: #fbf6f1; }
+
+.item-time {
+  flex: 0 0 56px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 15px;
+  padding-top: 1px;
+}
+
+.item-text {
+  flex: 1;
+  font-size: 15px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 22px;
+  line-height: 1;
+  padding: 0 6px;
+  min-height: auto;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity .15s, color .15s;
+  flex: 0 0 auto;
+}
+.delete-btn:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.empty-day {
+  padding: 8px 10px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+.schedule-footer {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* ---------- Export mode: hide editing UI ---------- */
+.schedule-card.exporting .delete-btn { display: none; }
+.schedule-card.exporting .schedule-title-hint { display: none; }
+.schedule-card.exporting .item:hover { background: transparent; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---------- Wider screens ---------- */
+@media (min-width: 700px) {
+  body { padding: 32px 20px; }
+  .app { max-width: 520px; gap: 20px; }
+  h1.app-title { font-size: 30px; }
+  .schedule-card { padding: 32px 28px; }
+  .schedule-title { font-size: 28px; }
+}

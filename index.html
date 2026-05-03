@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#fef6f0">
+<title>Расписание на неделю</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+
+<div class="app">
+  <h1 class="app-title">Конструктор расписания</h1>
+  <p class="app-subtitle">Составь неделю и скачай красивую картинку</p>
+
+  <div id="loader" class="loading">Загрузка…</div>
+
+  <div id="app-body" hidden>
+    <!-- Add form -->
+    <form class="form-card" id="add-form" autocomplete="off">
+      <div class="row">
+        <div class="field">
+          <label for="day">День</label>
+          <select id="day" required></select>
+        </div>
+        <div class="field" style="flex: 0 0 120px;">
+          <label for="time">Время</label>
+          <input id="time" type="time" required value="09:00">
+        </div>
+      </div>
+      <div class="field">
+        <label for="activity">Что делать</label>
+        <input id="activity" type="text" placeholder="Например: йога с Машей" required maxlength="80">
+      </div>
+      <button type="submit" class="btn-primary">+ Добавить</button>
+    </form>
+
+    <!-- Action buttons -->
+    <div class="actions" style="margin-top: 16px;">
+      <button type="button" id="download-btn" class="btn-secondary">📥 Скачать PNG</button>
+      <button type="button" id="clear-btn" class="btn-ghost">Очистить</button>
+    </div>
+
+    <!-- Schedule preview / export target -->
+    <div class="schedule-card" id="schedule-card" style="margin-top: 16px;">
+      <h2 class="schedule-title" id="schedule-title" contenteditable="true" spellcheck="false"></h2>
+      <p class="schedule-title-hint">↑ нажми, чтобы изменить заголовок</p>
+      <div id="days-container"></div>
+      <div class="schedule-footer" id="schedule-footer"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</body>
+</html>
