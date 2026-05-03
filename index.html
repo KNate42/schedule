@@ -153,6 +153,36 @@
   </div>
 </div>
 
+<!-- EXPORT PREVIEW MODAL -->
+<div class="modal-overlay" id="export-overlay" hidden aria-hidden="true">
+  <div class="modal-card export-modal" role="dialog" aria-modal="true" aria-labelledby="export-title">
+    <div class="modal-head">
+      <h3 class="modal-title" id="export-title">📥 Расписание готово</h3>
+      <button class="modal-close" id="export-close-btn" type="button" aria-label="Закрыть">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="export-body">
+      <div class="export-img-wrap">
+        <img id="export-preview-img" alt="Расписание">
+      </div>
+      <p class="export-hint">
+        💡 На телефоне — нажми и удерживай картинку, чтобы сохранить в галерею
+      </p>
+      <div class="export-actions">
+        <a id="export-download-link" class="btn-primary export-btn" download>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Скачать</span>
+        </a>
+        <button type="button" id="export-share-btn" class="btn-secondary export-btn" hidden>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span>Поделиться</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="datalists-host" hidden></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>

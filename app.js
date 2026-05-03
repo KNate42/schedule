@@ -75,6 +75,15 @@
   const presetNameInput  = $('preset-name-input');
   const presetSaveBtn    = $('preset-save-btn');
 
+  // Export preview modal refs
+  const exportOverlay    = $('export-overlay');
+  const exportCloseBtn   = $('export-close-btn');
+  const exportPreviewImg = $('export-preview-img');
+  const exportDownloadLink = $('export-download-link');
+  const exportShareBtn   = $('export-share-btn');
+  let exportObjectURL    = null;
+  let exportShareFile    = null;
+
   // section / datalist host
   const sectionSwitcher = $('section-switcher');
   const datalistsHost   = $('datalists-host');
@@ -494,6 +503,7 @@
   });
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
+    if (!exportOverlay.hidden) { closeExportPreview(); return; }
     if (!libraryOverlay.hidden) { closeLibrary(); return; }
     if (!modalOverlay.hidden) closeModal();
   });
@@ -698,22 +708,11 @@
 
       card.classList.remove('exporting');
 
-      // Use Blob + ObjectURL — toDataURL can exceed mobile-browser limits silently
       const blob = await new Promise((resolve, reject) => {
         canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob returned null')), 'image/png');
       });
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = makeFilename();
-      link.href = url;
-      link.rel = 'noopener';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-      showToast('Таблица сохранена ✓');
+      showExportPreview(blob, makeFilename());
     } catch (err) {
       console.error(err);
       card.classList.remove('exporting');
@@ -731,6 +730,63 @@
     const pad = n => String(n).padStart(2, '0');
     return `${t}-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.png`;
   }
+
+  /* ── Export preview modal ── */
+  function showExportPreview(blob, filename) {
+    if (exportObjectURL) URL.revokeObjectURL(exportObjectURL);
+    exportObjectURL = URL.createObjectURL(blob);
+
+    exportPreviewImg.src = exportObjectURL;
+    exportDownloadLink.href = exportObjectURL;
+    exportDownloadLink.setAttribute('download', filename);
+
+    // Web Share API — best UX on mobile (saves to Photos / sends anywhere)
+    exportShareFile = null;
+    exportShareBtn.hidden = true;
+    try {
+      if (navigator.canShare) {
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          exportShareFile = file;
+          exportShareBtn.hidden = false;
+        }
+      }
+    } catch {}
+
+    exportOverlay.hidden = false;
+    exportOverlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeExportPreview() {
+    exportOverlay.hidden = true;
+    exportOverlay.setAttribute('aria-hidden', 'true');
+    if (modalOverlay.hidden && libraryOverlay.hidden) document.body.style.overflow = '';
+    if (exportObjectURL) {
+      // delay revoke so the just-clicked download has time to start
+      const u = exportObjectURL;
+      exportObjectURL = null;
+      setTimeout(() => URL.revokeObjectURL(u), 8000);
+    }
+    exportPreviewImg.removeAttribute('src');
+    exportShareFile = null;
+  }
+
+  exportCloseBtn.addEventListener('click', closeExportPreview);
+  exportOverlay.addEventListener('click', e => {
+    if (e.target === exportOverlay) closeExportPreview();
+  });
+  exportShareBtn.addEventListener('click', async () => {
+    if (!exportShareFile) return;
+    try {
+      await navigator.share({ files: [exportShareFile], title: 'Расписание' });
+    } catch (err) {
+      if (err && err.name !== 'AbortError') {
+        console.error(err);
+        showToast('Не получилось поделиться');
+      }
+    }
+  });
 
   /* ══════════════════════════════════════
      TOAST
