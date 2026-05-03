@@ -33,6 +33,9 @@
     <div id="theme-picker" class="theme-picker"></div>
   </header>
 
+  <!-- SECTION SWITCHER -->
+  <div id="section-switcher" class="section-switcher" role="tablist"></div>
+
   <!-- ADD FORM -->
   <section class="form-card">
     <div class="form-card-title">
@@ -51,7 +54,7 @@
         </div>
         <div class="field field-subject">
           <label class="field-label" for="activity">Предмет</label>
-          <input id="activity" type="text" placeholder="Математика, Химия…" required maxlength="60" list="subjects-list">
+          <input id="activity" type="text" placeholder="Распевка, Дыхание…" required maxlength="60">
         </div>
       </div>
       <button type="submit" class="btn-primary">
@@ -109,7 +112,7 @@
         </div>
         <div class="field field-subject">
           <label class="field-label" for="modal-activity">Предмет</label>
-          <input id="modal-activity" type="text" required maxlength="60" list="subjects-list">
+          <input id="modal-activity" type="text" required maxlength="60">
         </div>
       </div>
       <div class="modal-actions">
@@ -126,28 +129,7 @@
   </div>
 </div>
 
-<datalist id="subjects-list">
-  <option value="Математика"></option>
-  <option value="Алгебра"></option>
-  <option value="Геометрия"></option>
-  <option value="Русский язык"></option>
-  <option value="Литература"></option>
-  <option value="Английский язык"></option>
-  <option value="Немецкий язык"></option>
-  <option value="Французский язык"></option>
-  <option value="История"></option>
-  <option value="Обществознание"></option>
-  <option value="География"></option>
-  <option value="Биология"></option>
-  <option value="Химия"></option>
-  <option value="Физика"></option>
-  <option value="Информатика"></option>
-  <option value="ИЗО"></option>
-  <option value="Музыка"></option>
-  <option value="Физкультура"></option>
-  <option value="Технология"></option>
-  <option value="ОБЖ"></option>
-</datalist>
+<div id="datalists-host" hidden></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

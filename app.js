@@ -12,21 +12,30 @@
     return;
   }
 
-  const STORAGE_KEY   = config.storageKeys.schedule;
-  const TITLE_KEY     = config.storageKeys.title;
-  const THEME_KEY     = config.storageKeys.theme;
-  const DAYS          = config.days;
-  const DEFAULT_TITLE = config.defaultScheduleTitle;
-  const DEFAULT_THEME = config.defaultTheme;
-  const THEMES        = config.themes;
-  const CATEGORIES    = config.categories;
-  const MONTHS        = config.monthsGenitive;
+  const LEGACY_SCHED_KEY = config.storageKeys.schedule;
+  const LEGACY_TITLE_KEY = config.storageKeys.title;
+  const THEME_KEY        = config.storageKeys.theme;
+  const SECTION_KEY      = config.storageKeys.section;
+  const SCHED_PREFIX     = config.storageKeys.schedulePrefix;
+  const TITLE_PREFIX     = config.storageKeys.titlePrefix;
+  const DAYS             = config.days;
+  const DEFAULT_TITLE    = config.defaultScheduleTitle;
+  const DEFAULT_THEME    = config.defaultTheme;
+  const DEFAULT_SECTION  = config.defaultSection || (config.sections?.[0]?.id) || 'vocal';
+  const THEMES           = config.themes;
+  const SECTIONS         = config.sections || [];
+  const CATEGORIES       = config.categories;
+  const MONTHS           = config.monthsGenitive;
+
+  /* ── one-time migration: legacy keys → vocal section ── */
+  migrateLegacy();
 
   /* ── state ── */
-  let schedule    = loadSchedule();
-  let selectedDay = todayIso();
-  let lastTouchedId = null;
-  const modalState = { editingId: null, day: todayIso() };
+  let currentSection = loadCurrentSection();
+  let schedule       = loadSchedule(currentSection);
+  let selectedDay    = todayIso();
+  let lastTouchedId  = null;
+  const modalState   = { editingId: null, day: todayIso() };
 
   /* ── DOM refs ── */
   const $ = id => document.getElementById(id);
@@ -56,8 +65,15 @@
   const modalCancelBtn= $('modal-cancel-btn');
   const modalCloseBtn = $('modal-close-btn');
 
+  // section refs
+  const sectionSwitcher = $('section-switcher');
+  const datalistsHost   = $('datalists-host');
+
   /* ── init UI ── */
   buildThemePicker();
+  buildSectionSwitcher();
+  buildDatalists();
+  refreshDatalistAttr();
   buildDayChips(dayChips, () => selectedDay, v => { selectedDay = v; });
   buildDayChips(modalDayChips, () => modalState.day, v => { modalState.day = v; refreshChips(modalDayChips, modalState.day); });
   applyTheme(loadTheme());
@@ -65,31 +81,60 @@
   appBody.hidden = false;
   $('loader').hidden = true;
 
-  /* ── title ── */
-  const savedTitle = localStorage.getItem(TITLE_KEY);
-  titleEl.textContent = savedTitle && savedTitle.trim() ? savedTitle : DEFAULT_TITLE;
+  /* ── title (per section) ── */
+  refreshTitle();
   titleEl.addEventListener('input', () => {
-    localStorage.setItem(TITLE_KEY, titleEl.textContent.trim() || DEFAULT_TITLE);
+    localStorage.setItem(getTitleKey(currentSection), titleEl.textContent.trim() || sectionDefaultTitle());
   });
   titleEl.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); titleEl.blur(); }
   });
   titleEl.addEventListener('blur', () => {
-    if (!titleEl.textContent.trim()) titleEl.textContent = DEFAULT_TITLE;
+    if (!titleEl.textContent.trim()) titleEl.textContent = sectionDefaultTitle();
   });
 
   /* ══════════════════════════════════════
      HELPERS
   ══════════════════════════════════════ */
-  function loadSchedule() {
+  function getSchedKey(s)  { return `${SCHED_PREFIX}${s}`; }
+  function getTitleKey(s)  { return `${TITLE_PREFIX}${s}`; }
+  function loadSchedule(section) {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(getSchedKey(section));
       if (!raw) return [];
       const p = JSON.parse(raw);
       return Array.isArray(p) ? p : [];
     } catch { return []; }
   }
-  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(schedule)); }
+  function save() { localStorage.setItem(getSchedKey(currentSection), JSON.stringify(schedule)); }
+
+  /* ── section helpers ── */
+  function loadCurrentSection() {
+    const s = localStorage.getItem(SECTION_KEY);
+    if (s && SECTIONS.some(x => x.id === s)) return s;
+    return DEFAULT_SECTION;
+  }
+  function getSection(id)        { return SECTIONS.find(s => s.id === id); }
+  function sectionDefaultTitle() { return getSection(currentSection)?.defaultTitle || DEFAULT_TITLE; }
+
+  function migrateLegacy() {
+    const vocalSchedKey = `${config.storageKeys.schedulePrefix}vocal`;
+    if (!localStorage.getItem(vocalSchedKey)) {
+      const old = localStorage.getItem(config.storageKeys.schedule);
+      if (old) {
+        localStorage.setItem(vocalSchedKey, old);
+        localStorage.removeItem(config.storageKeys.schedule);
+      }
+    }
+    const vocalTitleKey = `${config.storageKeys.titlePrefix}vocal`;
+    if (!localStorage.getItem(vocalTitleKey)) {
+      const old = localStorage.getItem(config.storageKeys.title);
+      if (old) {
+        localStorage.setItem(vocalTitleKey, old);
+        localStorage.removeItem(config.storageKeys.title);
+      }
+    }
+  }
   function uid()  { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
   function esc(s) {
     return String(s).replace(/[&<>"']/g, c =>
@@ -118,6 +163,58 @@
       const btn = e.target.closest('.theme-chip');
       if (btn) applyTheme(btn.dataset.theme);
     });
+  }
+
+  /* ── section switcher ── */
+  function buildSectionSwitcher() {
+    sectionSwitcher.innerHTML = SECTIONS.map(s => `
+      <button class="section-tab" type="button" role="tab" data-section="${s.id}" aria-selected="false">
+        <span class="tab-icon" aria-hidden="true">${s.icon}</span>
+        <span class="tab-name">${esc(s.name)}</span>
+      </button>`).join('');
+    refreshSectionTabs();
+    sectionSwitcher.addEventListener('click', e => {
+      const btn = e.target.closest('.section-tab');
+      if (!btn) return;
+      setSection(btn.dataset.section);
+    });
+  }
+  function refreshSectionTabs() {
+    for (const btn of sectionSwitcher.querySelectorAll('.section-tab')) {
+      btn.setAttribute('aria-selected', btn.dataset.section === currentSection ? 'true' : 'false');
+    }
+  }
+  function setSection(id) {
+    if (id === currentSection || !getSection(id)) return;
+    currentSection = id;
+    localStorage.setItem(SECTION_KEY, id);
+    schedule = loadSchedule(id);
+    refreshSectionTabs();
+    refreshTitle();
+    refreshDatalistAttr();
+    render();
+  }
+
+  /* ── datalists ── */
+  function buildDatalists() {
+    datalistsHost.innerHTML = SECTIONS.map(s => {
+      const opts = (s.subjects || []).map(v => `<option value="${esc(v)}"></option>`).join('');
+      return `<datalist id="subjects-${s.id}">${opts}</datalist>`;
+    }).join('');
+  }
+  function refreshDatalistAttr() {
+    activityInput.setAttribute('list', `subjects-${currentSection}`);
+    modalActivity.setAttribute('list', `subjects-${currentSection}`);
+    const subs = getSection(currentSection)?.subjects || [];
+    const ph = subs.length >= 2 ? `${subs[0]}, ${subs[1]}…` : (subs[0] || '');
+    activityInput.placeholder = ph;
+    modalActivity.placeholder = ph;
+  }
+
+  /* ── title ── */
+  function refreshTitle() {
+    const saved = localStorage.getItem(getTitleKey(currentSection));
+    titleEl.textContent = saved && saved.trim() ? saved : sectionDefaultTitle();
   }
 
   /* ── Day chips builder (reusable) ── */
@@ -448,7 +545,7 @@
   });
 
   function makeFilename() {
-    const t = (titleEl.textContent.trim() || DEFAULT_TITLE)
+    const t = (titleEl.textContent.trim() || sectionDefaultTitle())
       .replace(/[\\/:*?"<>|]/g, '').slice(0, 40);
     const d   = new Date();
     const pad = n => String(n).padStart(2, '0');

@@ -220,6 +220,45 @@ button { font: inherit; cursor: pointer; }
 }
 
 /* ══════════════════════════════════════════
+   SECTION SWITCHER (segmented control)
+══════════════════════════════════════════ */
+.section-switcher {
+  display: flex;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  gap: 2px;
+  box-shadow: var(--shadow-1);
+}
+.section-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.1px;
+  border-radius: 9px;
+  transition: background .2s, color .2s, box-shadow .2s, transform .1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.section-tab:hover { color: var(--ink); }
+.section-tab:active { transform: scale(.97); }
+.section-tab[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(20,24,55,.12), 0 0 0 1px rgba(20,24,55,.04);
+}
+.section-tab .tab-icon { font-size: 16px; line-height: 1; }
+.section-tab .tab-name { font-size: 14px; }
+
+/* ══════════════════════════════════════════
    CARDS
 ══════════════════════════════════════════ */
 .form-card {
