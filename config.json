@@ -17,7 +17,8 @@
     "theme":         "mom-schedule-theme-v1",
     "section":       "mom-schedule-section-v1",
     "schedulePrefix":"mom-schedule-list-",
-    "titlePrefix":   "mom-schedule-title-"
+    "titlePrefix":   "mom-schedule-title-",
+    "presets":       "mom-schedule-presets-v1"
   },
   "themes": [
     { "id": "morning", "name": "Утро",   "icon": "🌅" },

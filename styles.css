@@ -427,9 +427,13 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 
 .action-bar {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
-.action-bar > button { flex: 1; }
+.action-bar > button { flex: 1; min-width: 0; }
+.action-bar > button > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ══════════════════════════════════════════
    SCHEDULE CARD
@@ -794,6 +798,165 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 
 @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modalIn { from { opacity: 0; transform: scale(.95) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+/* ══════════════════════════════════════════
+   LIBRARY MODAL
+══════════════════════════════════════════ */
+.library-modal { max-width: 520px; }
+.library-body { padding: 16px 18px 18px; }
+
+.library-save-row {
+  display: flex;
+  gap: 8px;
+}
+.library-save-row input { flex: 1; min-width: 0; }
+.library-save-row .btn-primary { flex: 0 0 auto; padding: 0 14px; }
+
+.library-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 14px 0 10px;
+}
+
+.library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: 2px;
+  margin: -2px;
+}
+.library-list::-webkit-scrollbar { width: 6px; }
+.library-list::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; }
+
+.preset-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: background .15s, border-color .15s, transform .1s, box-shadow .15s;
+  animation: presetIn .35s cubic-bezier(.2,.8,.4,1) backwards;
+}
+.preset-card:hover {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-1);
+}
+.preset-section {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-light);
+  border-radius: 10px;
+  font-size: 18px;
+}
+.preset-info { flex: 1; min-width: 0; }
+.preset-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.1px;
+}
+.preset-meta {
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-top: 2px;
+}
+.preset-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+.preset-load-btn {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 8px;
+  min-height: 36px;
+  transition: background .15s, color .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.preset-load-btn:hover { background: var(--primary); color: #fff; }
+.preset-load-btn:active { transform: scale(.96); }
+
+.preset-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: background .15s, color .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.preset-delete-btn:hover { background: var(--danger-light); color: var(--danger); }
+
+.library-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--ink-muted);
+}
+.lib-empty-icon { font-size: 36px; display: block; margin-bottom: 10px; }
+.library-empty p { font-size: 13px; line-height: 1.6; }
+
+@keyframes presetIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════
+   APP ENTRANCE & SECTION SWITCH ANIMATIONS
+══════════════════════════════════════════ */
+.app > * {
+  animation: appIn .42s cubic-bezier(.2,.8,.4,1) backwards;
+}
+.app > *:nth-child(1) { animation-delay: 0ms; }
+.app > *:nth-child(2) { animation-delay: 60ms; }
+.app > *:nth-child(3) { animation-delay: 120ms; }
+.app > *:nth-child(4) { animation-delay: 180ms; }
+.app > *:nth-child(5) { animation-delay: 240ms; }
+.app > *:nth-child(6) { animation-delay: 300ms; }
+.app > *:nth-child(7) { animation-delay: 360ms; }
+
+@keyframes appIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#days-container { transition: opacity .18s ease; }
+#days-container.section-switching { opacity: 0; }
+
+/* lesson "pop in" only for just-added; section switch fade reveals others */
+.lesson-cell.just-added { animation: cellPop .4s cubic-bezier(.2,1.6,.4,1); }
+
+@keyframes cellPop {
+  0%   { opacity: 0; transform: scale(.7); }
+  50%  { opacity: 1; transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* day chip selection ring */
+.day-chip[aria-pressed="true"] {
+  animation: chipPress .25s ease-out;
+}
+@keyframes chipPress {
+  0%   { transform: scale(.92); }
+  60%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
 
 /* ══════════════════════════════════════════
    TOAST

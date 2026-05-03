@@ -66,9 +66,13 @@
 
   <!-- ACTION BAR -->
   <div class="action-bar">
+    <button type="button" id="library-btn" class="btn-secondary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M3 7v13a1 1 0 001 1h16a1 1 0 001-1V9a1 1 0 00-1-1h-9l-2-2H4a1 1 0 00-1 1z"/></svg>
+      <span>Архив</span>
+    </button>
     <button type="button" id="download-btn" class="btn-secondary">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      <span>Скачать PNG</span>
+      <span>PNG</span>
     </button>
     <button type="button" id="clear-btn" class="btn-ghost">Очистить</button>
   </div>
@@ -126,6 +130,33 @@
         </div>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- LIBRARY MODAL -->
+<div class="modal-overlay" id="library-overlay" hidden aria-hidden="true">
+  <div class="modal-card library-modal" role="dialog" aria-modal="true" aria-labelledby="library-title">
+    <div class="modal-head">
+      <h3 class="modal-title" id="library-title">📂 Мои расписания</h3>
+      <button class="modal-close" id="library-close-btn" type="button" aria-label="Закрыть">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="library-body">
+      <div class="library-save-row">
+        <input id="preset-name-input" type="text" placeholder="Название (например: Стандартная неделя)" maxlength="50">
+        <button id="preset-save-btn" type="button" class="btn-primary btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>Сохранить</span>
+        </button>
+      </div>
+      <div class="library-divider"></div>
+      <div class="library-list" id="library-list"></div>
+      <div class="library-empty" id="library-empty" hidden>
+        <span class="lib-empty-icon">📋</span>
+        <p>Здесь появятся твои сохранённые расписания.<br>Нажми «Сохранить», чтобы сохранить текущее.</p>
+      </div>
+    </div>
   </div>
 </div>
 
