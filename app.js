@@ -721,18 +721,14 @@
 
     downloadBtn.disabled = true;
     const originalHTML = downloadBtn.innerHTML;
-    const originalCardWidth = card.style.width;
-    const originalCardMaxWidth = card.style.maxWidth;
-    const originalWrapOverflow = tableWrap?.style.overflow;
-
     downloadBtn.innerHTML = '<span>Готовлю…</span>';
+
+    let stage = null;
 
     try {
       if (document.fonts?.ready) await document.fonts.ready;
       document.activeElement?.blur?.();
       window.getSelection?.()?.removeAllRanges?.();
-
-      card.classList.add('exporting');
 
       const exportWidth = Math.ceil(Math.max(
           card.scrollWidth,
@@ -740,16 +736,29 @@
           table?.scrollWidth || 0
       ));
 
-      card.style.width = `${exportWidth}px`;
-      card.style.maxWidth = 'none';
-      if (tableWrap) tableWrap.style.overflow = 'visible';
+      // html2canvas 1.4.1 fails to render #schedule-card in place (returns blank
+      // canvas). Workaround: clone the card into an off-screen wrapper and
+      // render that. The clone has its own context, no ancestors, no scroll.
+      stage = document.createElement('div');
+      stage.style.cssText =
+        'position:fixed;left:-99999px;top:0;background:#ffffff;' +
+        `width:${exportWidth}px;z-index:-1;pointer-events:none;`;
+      const clone = card.cloneNode(true);
+      clone.classList.add('exporting');
+      clone.style.width = `${exportWidth}px`;
+      clone.style.maxWidth = 'none';
+      clone.style.overflow = 'visible';
+      const cloneWrap = clone.querySelector('.table-wrap');
+      if (cloneWrap) cloneWrap.style.overflow = 'visible';
+      stage.appendChild(clone);
+      document.body.appendChild(stage);
 
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-      const exportHeight = Math.ceil(card.scrollHeight);
+      const exportHeight = Math.ceil(clone.scrollHeight);
       const scale = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
 
-      const canvas = await html2canvas(card, {
+      const canvas = await html2canvas(stage, {
         scale,
         backgroundColor: '#ffffff',
         useCORS: true,
@@ -757,10 +766,6 @@
         logging: false,
         width: exportWidth,
         height: exportHeight,
-        windowWidth: exportWidth,
-        windowHeight: exportHeight,
-        scrollX: 0,
-        scrollY: 0,
       });
 
       const blob = await new Promise((resolve, reject) => {
@@ -776,11 +781,7 @@
       const detail = String(err?.message || err || 'unknown');
       showToast('PNG не получился: ' + detail.slice(0, 80));
     } finally {
-      card.classList.remove('exporting');
-      card.style.width = originalCardWidth;
-      card.style.maxWidth = originalCardMaxWidth;
-      if (tableWrap) tableWrap.style.overflow = originalWrapOverflow || '';
-
+      if (stage && stage.parentNode) stage.parentNode.removeChild(stage);
       downloadBtn.disabled = false;
       downloadBtn.innerHTML = originalHTML;
     }
