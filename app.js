@@ -78,6 +78,15 @@
   const sectionSwitcher = $('section-switcher');
   const datalistsHost   = $('datalists-host');
 
+  /* ── toast (declared early so any handler can call showToast safely) ── */
+  let toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('visible'), 2000);
+  }
+
   /* ── init UI ── */
   buildThemePicker();
   if (sectionSwitcher && SECTIONS.length > 1) buildSectionSwitcher();
@@ -690,17 +699,6 @@
       }
     }
   });
-
-  /* ══════════════════════════════════════
-     TOAST
-  ══════════════════════════════════════ */
-  let toastTimer = null;
-  function showToast(msg) {
-    toastEl.textContent = msg;
-    toastEl.classList.add('visible');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('visible'), 2000);
-  }
 
   /* ── fatal error ── */
   function showFatalError(err) {
