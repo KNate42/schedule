@@ -18,7 +18,6 @@
   const SECTION_KEY      = config.storageKeys.section;
   const SCHED_PREFIX     = config.storageKeys.schedulePrefix;
   const TITLE_PREFIX     = config.storageKeys.titlePrefix;
-  const PRESETS_KEY      = config.storageKeys.presets;
   const DAYS             = config.days;
   const DEFAULT_TITLE    = config.defaultScheduleTitle;
   const DEFAULT_THEME    = config.defaultTheme;
@@ -49,7 +48,6 @@
   const daysContainer = $('days-container');
   const downloadBtn   = $('download-btn');
   const clearBtn      = $('clear-btn');
-  const libraryBtn    = $('library-btn');
   const titleEl       = $('schedule-title');
   const weekRangeEl   = $('schedule-week-range');
   const footerEl      = $('schedule-footer');
@@ -66,14 +64,6 @@
   const modalDeleteBtn= $('modal-delete-btn');
   const modalCancelBtn= $('modal-cancel-btn');
   const modalCloseBtn = $('modal-close-btn');
-
-  // Library modal refs
-  const libraryOverlay   = $('library-overlay');
-  const libraryCloseBtn  = $('library-close-btn');
-  const libraryList      = $('library-list');
-  const libraryEmpty     = $('library-empty');
-  const presetNameInput  = $('preset-name-input');
-  const presetSaveBtn    = $('preset-save-btn');
 
   // Export preview modal refs
   const exportOverlay    = $('export-overlay');
@@ -528,7 +518,6 @@
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (!exportOverlay.hidden) { closeExportPreview(); return; }
-    if (!libraryOverlay.hidden) { closeLibrary(); return; }
     if (!modalOverlay.hidden) closeModal();
   });
 
@@ -541,169 +530,6 @@
     schedule = [];
     save(); render();
     showToast('Очищено');
-  });
-
-  /* ══════════════════════════════════════
-     PRESETS LIBRARY
-  ══════════════════════════════════════ */
-  function loadPresets() {
-    try {
-      const raw = localStorage.getItem(PRESETS_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(arr)) return [];
-      return arr
-        .filter(p => p && typeof p === 'object')
-        .map(p => ({
-          id: typeof p.id === 'string' && p.id.length <= 64 ? p.id : uid(),
-          name: typeof p.name === 'string' ? p.name.slice(0, 60) : '',
-          section: typeof p.section === 'string' ? p.section : '',
-          title: typeof p.title === 'string' ? p.title.slice(0, 200) : '',
-          schedule: sanitizeScheduleArray(p.schedule),
-          createdAt: Number.isFinite(p.createdAt) ? p.createdAt : Date.now(),
-        }));
-    } catch { return []; }
-  }
-  function savePresets(arr) {
-    try {
-      localStorage.setItem(PRESETS_KEY, JSON.stringify(arr));
-    } catch (e) {
-      showToast('Хранилище переполнено');
-      throw e;
-    }
-  }
-  function presetSaveCurrent(name) {
-    const all = loadPresets();
-    const preset = {
-      id: uid(),
-      name: name.trim().slice(0, 60),
-      section: currentSection,
-      title: titleEl.textContent.trim() || sectionDefaultTitle(),
-      schedule: JSON.parse(JSON.stringify(schedule)),
-      createdAt: Date.now(),
-    };
-    all.unshift(preset);
-    savePresets(all);
-    return preset;
-  }
-  function presetDelete(id) {
-    savePresets(loadPresets().filter(p => p.id !== id));
-  }
-  function presetLoad(id) {
-    const p = loadPresets().find(x => x.id === id);
-    if (!p) return false;
-    if (p.section && p.section !== currentSection && getSection(p.section)) {
-      currentSection = p.section;
-      localStorage.setItem(SECTION_KEY, currentSection);
-      refreshSectionTabs();
-      refreshDatalistAttr();
-    }
-    schedule = JSON.parse(JSON.stringify(p.schedule || []));
-    save();
-    if (p.title) {
-      titleEl.textContent = p.title;
-      localStorage.setItem(getTitleKey(currentSection), p.title);
-    } else {
-      refreshTitle();
-    }
-    render();
-    return true;
-  }
-
-  function fmtPresetDate(ts) {
-    try {
-      return new Date(ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-    } catch { return ''; }
-  }
-
-  function renderLibrary() {
-    const all = loadPresets();
-    if (all.length === 0) {
-      libraryList.innerHTML = '';
-      libraryEmpty.hidden = false;
-      return;
-    }
-    libraryEmpty.hidden = true;
-    libraryList.innerHTML = all.map((p, i) => {
-      const sec = getSection(p.section);
-      const icon = sec?.icon || '📋';
-      const count = (p.schedule || []).length;
-      const date = fmtPresetDate(p.createdAt);
-      return `
-        <div class="preset-card" data-id="${esc(p.id)}" style="animation-delay:${i * 30}ms">
-          <div class="preset-section" aria-hidden="true">${icon}</div>
-          <div class="preset-info">
-            <div class="preset-name">${esc(p.name || 'Без названия')}</div>
-            <div class="preset-meta">${count} ${pluralLessons(count)} · ${date}</div>
-          </div>
-          <div class="preset-actions">
-            <button class="preset-load-btn" type="button" data-action="load">Открыть</button>
-            <button class="preset-delete-btn" type="button" data-action="delete" aria-label="Удалить">×</button>
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  function pluralLessons(n) {
-    const m10 = n % 10, m100 = n % 100;
-    if (m10 === 1 && m100 !== 11) return 'урок';
-    if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return 'урока';
-    return 'уроков';
-  }
-
-  function openLibrary() {
-    presetNameInput.value = '';
-    renderLibrary();
-    libraryOverlay.hidden = false;
-    libraryOverlay.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
-    setTimeout(() => presetNameInput.focus(), 30);
-  }
-  function closeLibrary() {
-    libraryOverlay.hidden = true;
-    libraryOverlay.setAttribute('aria-hidden', 'true');
-    if (modalOverlay.hidden) document.body.style.overflow = '';
-  }
-
-  libraryBtn.addEventListener('click', openLibrary);
-  libraryCloseBtn.addEventListener('click', closeLibrary);
-  libraryOverlay.addEventListener('click', e => {
-    if (e.target === libraryOverlay) closeLibrary();
-  });
-
-  presetSaveBtn.addEventListener('click', () => {
-    const name = presetNameInput.value.trim();
-    if (!name) { presetNameInput.focus(); showToast('Введи название'); return; }
-    if (schedule.length === 0) { showToast('Расписание пустое'); return; }
-    try {
-      presetSaveCurrent(name);
-      presetNameInput.value = '';
-      renderLibrary();
-      showToast('Сохранено ✓');
-    } catch {}
-  });
-  presetNameInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); presetSaveBtn.click(); }
-  });
-
-  libraryList.addEventListener('click', e => {
-    const card = e.target.closest('.preset-card');
-    if (!card) return;
-    const id = card.dataset.id;
-    const action = e.target.closest('[data-action]')?.dataset.action;
-    if (action === 'load') {
-      const preset = loadPresets().find(p => p.id === id);
-      const name = preset?.name || 'это расписание';
-      if (schedule.length > 0 && !confirm(`Загрузить «${name}»? Текущее расписание будет заменено.`)) return;
-      if (presetLoad(id)) {
-        closeLibrary();
-        showToast('Загружено ✓');
-      }
-    } else if (action === 'delete') {
-      if (!confirm('Удалить это сохранённое расписание?')) return;
-      presetDelete(id);
-      renderLibrary();
-      showToast('Удалено');
-    }
   });
 
   /* ══════════════════════════════════════
@@ -838,7 +664,7 @@
   function closeExportPreview() {
     exportOverlay.hidden = true;
     exportOverlay.setAttribute('aria-hidden', 'true');
-    if (modalOverlay.hidden && libraryOverlay.hidden) document.body.style.overflow = '';
+    if (modalOverlay.hidden) document.body.style.overflow = '';
     if (exportObjectURL) {
       // delay revoke so the just-clicked download has time to start
       const u = exportObjectURL;
