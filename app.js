@@ -768,6 +768,7 @@
       });
 
       const filename = makeFilename();
+      triggerDownload(blob, filename);
       showExportPreview(blob, filename);
       showToast('PNG готов');
     } catch (err) {
@@ -790,6 +791,19 @@
     const d   = new Date();
     const pad = n => String(n).padStart(2, '0');
     return `${t}-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.png`;
+  }
+
+  function triggerDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.rel = 'noopener';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 8000);
   }
 
   /* ── Export preview modal ── */
