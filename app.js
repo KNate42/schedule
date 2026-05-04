@@ -773,7 +773,8 @@
       showToast('PNG готов');
     } catch (err) {
       console.error(err);
-      showToast('Не получилось, попробуй ещё раз');
+      const detail = String(err?.message || err || 'unknown');
+      showToast('PNG не получился: ' + detail.slice(0, 80));
     } finally {
       card.classList.remove('exporting');
       card.style.width = originalCardWidth;
