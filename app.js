@@ -108,18 +108,42 @@
   titleEl.addEventListener('blur', () => {
     if (!titleEl.textContent.trim()) titleEl.textContent = sectionDefaultTitle();
   });
+  titleEl.addEventListener('paste', e => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text').slice(0, 200);
+    document.execCommand('insertText', false, text);
+  });
 
   /* ══════════════════════════════════════
      HELPERS
   ══════════════════════════════════════ */
   function getSchedKey(s)  { return `${SCHED_PREFIX}${s}`; }
   function getTitleKey(s)  { return `${TITLE_PREFIX}${s}`; }
+  function sanitizeItem(x) {
+    if (!x || typeof x !== 'object') return null;
+    const day = parseInt(x.day, 10);
+    if (!Number.isInteger(day) || day < 1 || day > 7) return null;
+    const time = typeof x.time === 'string' && /^\d{2}:\d{2}$/.test(x.time) ? x.time : null;
+    if (!time) return null;
+    const activity = typeof x.activity === 'string' ? x.activity.slice(0, 200) : '';
+    if (!activity.trim()) return null;
+    const id = typeof x.id === 'string' && x.id.length <= 64 ? x.id : uid();
+    return { id, day, time, activity };
+  }
+  function sanitizeScheduleArray(arr) {
+    if (!Array.isArray(arr)) return [];
+    const out = [];
+    for (const x of arr) {
+      const item = sanitizeItem(x);
+      if (item) out.push(item);
+    }
+    return out;
+  }
   function loadSchedule(section) {
     try {
       const raw = localStorage.getItem(getSchedKey(section));
       if (!raw) return [];
-      const p = JSON.parse(raw);
-      return Array.isArray(p) ? p : [];
+      return sanitizeScheduleArray(JSON.parse(raw));
     } catch { return []; }
   }
   function save() { localStorage.setItem(getSchedKey(currentSection), JSON.stringify(schedule)); }
@@ -526,7 +550,17 @@
     try {
       const raw = localStorage.getItem(PRESETS_KEY);
       const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
+      if (!Array.isArray(arr)) return [];
+      return arr
+        .filter(p => p && typeof p === 'object')
+        .map(p => ({
+          id: typeof p.id === 'string' && p.id.length <= 64 ? p.id : uid(),
+          name: typeof p.name === 'string' ? p.name.slice(0, 60) : '',
+          section: typeof p.section === 'string' ? p.section : '',
+          title: typeof p.title === 'string' ? p.title.slice(0, 200) : '',
+          schedule: sanitizeScheduleArray(p.schedule),
+          createdAt: Number.isFinite(p.createdAt) ? p.createdAt : Date.now(),
+        }));
     } catch { return []; }
   }
   function savePresets(arr) {
@@ -680,44 +714,71 @@
       showToast('Библиотека ещё грузится, попробуй ещё раз');
       return;
     }
+
     const card = $('schedule-card');
+    const tableWrap = card.querySelector('.table-wrap');
+    const table = card.querySelector('.schedule-table');
+
     downloadBtn.disabled = true;
     const originalHTML = downloadBtn.innerHTML;
+    const originalCardWidth = card.style.width;
+    const originalCardMaxWidth = card.style.maxWidth;
+    const originalWrapOverflow = tableWrap?.style.overflow;
+
     downloadBtn.innerHTML = '<span>Готовлю…</span>';
+
     try {
       if (document.fonts?.ready) await document.fonts.ready;
       document.activeElement?.blur?.();
       window.getSelection?.()?.removeAllRanges?.();
 
       card.classList.add('exporting');
+
+      const exportWidth = Math.ceil(Math.max(
+          card.scrollWidth,
+          tableWrap?.scrollWidth || 0,
+          table?.scrollWidth || 0
+      ));
+
+      card.style.width = `${exportWidth}px`;
+      card.style.maxWidth = 'none';
+      if (tableWrap) tableWrap.style.overflow = 'visible';
+
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-      // Cap scale: high enough for crisp print, low enough to avoid huge files
+      const exportHeight = Math.ceil(card.scrollHeight);
       const scale = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
 
       const canvas = await html2canvas(card, {
         scale,
         backgroundColor: '#ffffff',
         useCORS: true,
+        allowTaint: true,
         logging: false,
-        width:  card.scrollWidth,
-        height: card.scrollHeight,
-        windowWidth:  card.scrollWidth,
-        windowHeight: card.scrollHeight,
+        width: exportWidth,
+        height: exportHeight,
+        windowWidth: exportWidth,
+        windowHeight: exportHeight,
+        scrollX: 0,
+        scrollY: 0,
       });
-
-      card.classList.remove('exporting');
 
       const blob = await new Promise((resolve, reject) => {
         canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob returned null')), 'image/png');
       });
 
-      showExportPreview(blob, makeFilename());
+      const filename = makeFilename();
+      showExportPreview(blob, filename);
+      showToast('PNG готов');
     } catch (err) {
       console.error(err);
-      card.classList.remove('exporting');
       showToast('Не получилось, попробуй ещё раз');
     } finally {
+      card.classList.remove('exporting');
+      card.style.width = originalCardWidth;
+      card.style.maxWidth = originalCardMaxWidth;
+      if (tableWrap) tableWrap.style.overflow = originalWrapOverflow || '';
+
       downloadBtn.disabled = false;
       downloadBtn.innerHTML = originalHTML;
     }
@@ -725,7 +786,7 @@
 
   function makeFilename() {
     const t = (titleEl.textContent.trim() || sectionDefaultTitle())
-      .replace(/[\\/:*?"<>|]/g, '').slice(0, 40);
+        .replace(/[\\/:*?"<>|]/g, '').slice(0, 40);
     const d   = new Date();
     const pad = n => String(n).padStart(2, '0');
     return `${t}-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.png`;
